@@ -1,6 +1,9 @@
+# script.py
+
 import argparse
 import ipaddress
 import sys
+import yaml
 
 
 def validate_cidr(cidr):
@@ -21,10 +24,13 @@ def merge_and_normalize_cidrs(cidr_list):
     invalid_cidrs = []
 
     for cidr in cidr_list:
-        if validate_cidr(cidr):
-            valid_cidrs.append(cidr)
-        else:
-            invalid_cidrs.append(cidr)
+        # Ignore lines starting with '#' or '//'
+        if not cidr.strip().startswith('#') \
+                and not cidr.strip().startswith('//'):
+            if validate_cidr(cidr):
+                valid_cidrs.append(cidr)
+            else:
+                invalid_cidrs.append(cidr)
 
     if invalid_cidrs:
         print(f"Invalid CIDRs: {invalid_cidrs}", file=sys.stderr)
@@ -32,26 +38,28 @@ def merge_and_normalize_cidrs(cidr_list):
 
     if valid_cidrs:
         normalized_cidrs = [normalize_cidr(cidr) for cidr in valid_cidrs]
-        cidr_objects = [ipaddress.ip_network(cidr)
-                        for cidr in normalized_cidrs]
-        return [str(cidr)
-                for cidr in ipaddress.collapse_addresses(cidr_objects)]
+        cidr_objects = [ipaddress.ip_network(
+            cidr) for cidr in normalized_cidrs]
+        return [str(cidr) for
+                cidr in ipaddress.collapse_addresses(cidr_objects)]
 
     return []
 
 
 def generate_calico_manifest(name, namespace, labels, cidrs):
+    labels_dict = yaml.safe_load(labels)
+    formatted_labels = "\n    ".join(
+        [f"{key}: '{value}'" for key, value in labels_dict.items()])
+
     manifest = f"""apiVersion: crd.projectcalico.org/v1
 kind: NetworkSet
 metadata:
   name: {name}
   namespace: {namespace}
-  labels:"""
-
-    for label in labels.split(','):
-        manifest += f"\n    {label.strip()}"
-
-    manifest += "\nspec:\n  nets:"
+  labels:
+    {formatted_labels}
+spec:
+  nets:"""""
 
     for cidr in cidrs:
         manifest += f"\n    - {cidr}"
@@ -69,21 +77,29 @@ def main():
     parser.add_argument('--namespace', type=str, required=True,
                         help='Namespace of the NetworkSet')
     parser.add_argument('--labels', type=str, required=True,
-                        help='Comma-separated list of labels for the '
-                        'NetworkSet')
+                        help='YAML string of labels for the '
+                        'NetworkSet in key:value format')
+    parser.add_argument('--output', type=str, help='Output file name')
 
     args = parser.parse_args()
 
     cidr_list = []
     for file_path in args.file_paths:
         with open(file_path, 'r') as file:
-            cidr_list.extend([line.strip() for line in file])
+            # Filter out lines starting with '#' or '//'
+            lines = [line.strip() for line in file if not line.strip(
+            ).startswith('#') and not line.strip().startswith('//')]
+            cidr_list.extend(lines)
 
     normalized_cidrs = merge_and_normalize_cidrs(cidr_list)
     calico_manifest = generate_calico_manifest(
         args.name, args.namespace, args.labels, normalized_cidrs)
 
-    print(calico_manifest)
+    if args.output:
+        with open(args.output, 'w') as output_file:
+            output_file.write(calico_manifest)
+    else:
+        print(calico_manifest)
 
 
 if __name__ == "__main__":
