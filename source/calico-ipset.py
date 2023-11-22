@@ -2,6 +2,7 @@
 
 import argparse
 import ipaddress
+import os.path
 import sys
 import yaml
 
@@ -82,6 +83,13 @@ def main():
     parser.add_argument('--output', type=str, help='Output file name')
 
     args = parser.parse_args()
+
+    for file_path in args.file_paths:
+        if not os.path.exists(file_path):
+            print(
+                f"Error: Input file '{file_path}' does not exist.",
+                file=sys.stderr)
+            sys.exit(1)
 
     cidr_list = []
     for file_path in args.file_paths:
