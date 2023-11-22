@@ -43,16 +43,18 @@ def merge_and_normalize_cidrs(cidr_list):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Merge and normalize CIDRs from a file')
-    parser.add_argument('file_path', type=str,
-                        help='Path to the file containing CIDRs')
+        description='Merge and normalize CIDRs from files')
+    parser.add_argument('file_paths', type=str, nargs='+',
+                        help='Paths to the files containing CIDRs')
     parser.add_argument('-i', '--indent', type=int, default=0,
                         help='Number of spaces for indentation')
 
     args = parser.parse_args()
 
-    with open(args.file_path, 'r') as file:
-        cidr_list = [line.strip() for line in file]
+    cidr_list = []
+    for file_path in args.file_paths:
+        with open(file_path, 'r') as file:
+            cidr_list.extend([line.strip() for line in file])
 
     result = merge_and_normalize_cidrs(cidr_list)
     for cidr in result:
