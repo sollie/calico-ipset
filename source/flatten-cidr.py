@@ -34,20 +34,43 @@ def merge_and_normalize_cidrs(cidr_list):
         normalized_cidrs = [normalize_cidr(cidr) for cidr in valid_cidrs]
         cidr_objects = [ipaddress.ip_network(cidr)
                         for cidr in normalized_cidrs]
-        merged_cidrs = ipaddress.collapse_addresses(cidr_objects)
-        result = [str(cidr) for cidr in merged_cidrs]
-        return result
+        return [str(cidr)
+                for cidr in ipaddress.collapse_addresses(cidr_objects)]
 
     return []
 
 
+def generate_calico_manifest(name, namespace, labels, cidrs):
+    manifest = f"""apiVersion: crd.projectcalico.org/v1
+kind: NetworkSet
+metadata:
+  name: {name}
+  namespace: {namespace}
+  labels:"""
+
+    for label in labels.split(','):
+        manifest += f"\n    {label.strip()}"
+
+    manifest += "\nspec:\n  nets:"
+
+    for cidr in cidrs:
+        manifest += f"\n    - {cidr}"
+
+    return manifest
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Merge and normalize CIDRs from files')
+        description='Generate Calico manifest for NetworkSet')
     parser.add_argument('file_paths', type=str, nargs='+',
                         help='Paths to the files containing CIDRs')
-    parser.add_argument('-i', '--indent', type=int, default=0,
-                        help='Number of spaces for indentation')
+    parser.add_argument('--name', type=str, required=True,
+                        help='Name of the NetworkSet')
+    parser.add_argument('--namespace', type=str, required=True,
+                        help='Namespace of the NetworkSet')
+    parser.add_argument('--labels', type=str, required=True,
+                        help='Comma-separated list of labels for the '
+                        'NetworkSet')
 
     args = parser.parse_args()
 
@@ -56,9 +79,11 @@ def main():
         with open(file_path, 'r') as file:
             cidr_list.extend([line.strip() for line in file])
 
-    result = merge_and_normalize_cidrs(cidr_list)
-    for cidr in result:
-        print(' ' * args.indent + cidr)
+    normalized_cidrs = merge_and_normalize_cidrs(cidr_list)
+    calico_manifest = generate_calico_manifest(
+        args.name, args.namespace, args.labels, normalized_cidrs)
+
+    print(calico_manifest)
 
 
 if __name__ == "__main__":
