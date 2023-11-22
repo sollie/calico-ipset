@@ -1,5 +1,6 @@
 import argparse
 import ipaddress
+import sys
 
 
 def validate_cidr(cidr):
@@ -26,7 +27,8 @@ def merge_and_normalize_cidrs(cidr_list):
             invalid_cidrs.append(cidr)
 
     if invalid_cidrs:
-        print(f"Invalid CIDRs: {invalid_cidrs}")
+        print(f"Invalid CIDRs: {invalid_cidrs}", file=sys.stderr)
+        sys.exit(1)
 
     if valid_cidrs:
         normalized_cidrs = [normalize_cidr(cidr) for cidr in valid_cidrs]
@@ -51,7 +53,8 @@ def main():
         cidr_list = [line.strip() for line in file]
 
     result = merge_and_normalize_cidrs(cidr_list)
-    print(result)
+    for cidr in result:
+        print(cidr)
 
 
 if __name__ == "__main__":
