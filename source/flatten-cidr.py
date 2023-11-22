@@ -1,5 +1,5 @@
+import argparse
 import ipaddress
-import sys
 
 
 def validate_cidr(cidr):
@@ -39,11 +39,20 @@ def merge_and_normalize_cidrs(cidr_list):
     return []
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python script.py cidr1 cidr2 cidr3 ...")
-        sys.exit(1)
+def main():
+    parser = argparse.ArgumentParser(
+        description='Merge and normalize CIDRs from a file')
+    parser.add_argument('file_path', type=str,
+                        help='Path to the file containing CIDRs')
 
-    cidr_list = sys.argv[1:]
+    args = parser.parse_args()
+
+    with open(args.file_path, 'r') as file:
+        cidr_list = [line.strip() for line in file]
+
     result = merge_and_normalize_cidrs(cidr_list)
     print(result)
+
+
+if __name__ == "__main__":
+    main()
