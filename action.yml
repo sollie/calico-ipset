@@ -14,7 +14,10 @@ inputs:
     description: 'Namespace of the NetworkSet'
   labels:
     required: true
-    description: 'YAML list of maps for labels in key:value format'
+    description: 'String of labels for the NetworkSet in key:value format'
   file-paths:
     required: true
     description: 'Paths to the files containing CIDRs'
+  output:
+    required: false
+    description: 'Output file name (default: stdout)'
