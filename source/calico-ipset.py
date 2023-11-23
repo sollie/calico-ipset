@@ -68,10 +68,27 @@ spec:
     return manifest
 
 
+def process_list(original_list):
+    new_list = []
+
+    for item in original_list:
+        if isinstance(item, str) and ',' in item:
+            # If the item is a string containing commas, split it into a list
+            new_list.extend(item.split(','))
+        elif isinstance(item, list):
+            # If the item is already a list, create a copy of it
+            new_list.append(item)
+        else:
+            # If the item is a single string without commas, just copy it
+            new_list.append(item)
+
+    return new_list
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Generate Calico manifest for NetworkSet')
-    parser.add_argument('file_paths', type=str, nargs='+',
+    parser.add_argument('files', type=str, nargs='+',
                         help='Paths to the files containing CIDRs')
     parser.add_argument('--name', type=str, required=True,
                         help='Name of the NetworkSet')
@@ -84,7 +101,9 @@ def main():
 
     args = parser.parse_args()
 
-    for file_path in args.file_paths:
+    inputs = process_list(args.files)
+
+    for file_path in inputs:
         if not os.path.exists(file_path):
             print(
                 f"Error: Input file '{file_path}' does not exist.",
@@ -92,8 +111,13 @@ def main():
             sys.exit(1)
 
     cidr_list = []
-    for file_path in args.file_paths:
-        with open(file_path, 'r') as file:
+    if os.path.isdir('/github/workspace'):
+        path_prefix = '/github/workspace/'
+    else:
+        path_prefix = ''
+
+    for file_path in inputs:
+        with open(path_prefix + file_path, 'r') as file:
             # Filter out lines starting with '#' or '//'
             lines = [line.strip() for line in file if not line.strip(
             ).startswith('#') and not line.strip().startswith('//')]
