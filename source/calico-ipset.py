@@ -72,14 +72,14 @@ def process_list(original_list):
     new_list = []
 
     for item in original_list:
+        if len(item) == 0:
+            continue
         if isinstance(item, str) and ',' in item:
-            # If the item is a string containing commas, split it into a list
-            new_list.extend(item.split(','))
+            split_elements = [elem for elem in item.split(',') if elem.strip()]
+            new_list.extend(split_elements)
         elif isinstance(item, list):
-            # If the item is already a list, create a copy of it
             new_list.append(item)
         else:
-            # If the item is a single string without commas, just copy it
             new_list.append(item)
 
     return new_list
@@ -102,19 +102,29 @@ def main():
     args = parser.parse_args()
 
     inputs = process_list(args.files)
+    print(f"Inputs: {inputs}")
 
-    for file_path in inputs:
-        if not os.path.exists(file_path):
-            print(
-                f"Error: Input file '{file_path}' does not exist.",
-                file=sys.stderr)
-            sys.exit(1)
-
-    cidr_list = []
     if os.path.isdir('/github/workspace'):
         path_prefix = '/github/workspace/'
     else:
         path_prefix = ''
+
+    for i in range(len(inputs)):
+        if ' ' in inputs[i]:
+            split_elements = [elem for elem in
+                              inputs[i].split(' ') if elem.strip()]
+            inputs.extend(split_elements)
+            inputs.remove(inputs[i])
+
+    for file_path in inputs:
+        if not os.path.exists(path_prefix + file_path):
+            print(
+                f"Error: Input file '{path_prefix + file_path}' "
+                "does not exist.",
+                file=sys.stderr)
+            sys.exit(1)
+
+    cidr_list = []
 
     for file_path in inputs:
         with open(path_prefix + file_path, 'r') as file:
@@ -128,7 +138,7 @@ def main():
         args.name, args.namespace, args.labels, normalized_cidrs)
 
     if args.output:
-        with open(args.output, 'w') as output_file:
+        with open(path_prefix + args.output, 'w') as output_file:
             output_file.write(calico_manifest)
     else:
         print(calico_manifest)
