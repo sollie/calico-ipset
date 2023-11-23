@@ -41,4 +41,4 @@ python /app/calico-ipset.py \
   --namespace="$INPUT_NAMESPACE" \
   --labels="$parsed_labels" \
   "$output_option" \
-  "$INPUT_FILE_PATHS"
+  "$INPUT_INPUTS"

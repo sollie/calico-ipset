@@ -15,7 +15,7 @@ inputs:
   labels:
     required: true
     description: 'String of labels for the NetworkSet in key:value format'
-  file-paths:
+  inputs:
     required: true
     description: 'Paths to the files containing CIDRs'
   output:
