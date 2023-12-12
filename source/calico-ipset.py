@@ -1,5 +1,3 @@
-# script.py
-
 import argparse
 import ipaddress
 import os.path
