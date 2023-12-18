@@ -34,11 +34,17 @@ if [ -n "$INPUT_OUTPUT" ]; then
   output_option="--output=$INPUT_OUTPUT"
 fi
 
+minmask_option=""
+if [ -n "$INPUT_MINMASK" ]; then
+  minmask_option="--minmask=$INPUT_MINMASK"
+fi
+
 parsed_labels=$(convert_to_json "$INPUT_LABELS")
 
 python /app/calico-ipset.py \
   --name="$INPUT_NAME" \
   --namespace="$INPUT_NAMESPACE" \
   --labels="$parsed_labels" \
+  "$minmask_option" \
   "$output_option" \
   "$INPUT_INPUTS"
