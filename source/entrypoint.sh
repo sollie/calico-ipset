@@ -35,7 +35,7 @@ if [ -n "$INPUT_OUTPUT" ]; then
 fi
 
 minmask_option=""
-if [ -n "$INPUT_MIN_MASK" ]; then
+if [ -n "$INPUT_MINMASK" ]; then
   minmask_option="--minmask=$INPUT_MINMASK"
 fi
 
