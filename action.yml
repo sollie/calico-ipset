@@ -21,3 +21,7 @@ inputs:
   output:
     required: false
     description: 'Output file name (default: stdout)'
+  minmask:
+    required: false
+    default: 32
+    description: 'Minimum output network mask'

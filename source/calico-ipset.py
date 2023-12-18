@@ -1,5 +1,3 @@
-# script.py
-
 import argparse
 import ipaddress
 import os.path
@@ -15,17 +13,24 @@ def validate_cidr(cidr):
         return False
 
 
-def normalize_cidr(cidr):
+def normalize_cidr(cidr, min_mask):
     cidr_object = ipaddress.ip_network(cidr, strict=False)
-    return f"{cidr_object.network_address}/{cidr_object.netmask}"
+
+    if cidr_object.prefixlen > min_mask:
+        new_cidr = ipaddress.ip_network(
+            str(cidr_object.network_address) + "/" + str(min_mask), strict=False)
+    else:
+        new_cidr = cidr_object
+
+    print(f"Normalized {cidr} to {new_cidr}")
+    return f"{new_cidr.network_address}/{new_cidr.netmask}"
 
 
-def merge_and_normalize_cidrs(cidr_list):
+def merge_and_normalize_cidrs(cidr_list, min_mask):
     valid_cidrs = []
     invalid_cidrs = []
 
     for cidr in cidr_list:
-        # Ignore lines starting with '#' or '//'
         if not cidr.strip().startswith('#') \
                 and not cidr.strip().startswith('//'):
             if validate_cidr(cidr):
@@ -38,7 +43,8 @@ def merge_and_normalize_cidrs(cidr_list):
         sys.exit(1)
 
     if valid_cidrs:
-        normalized_cidrs = [normalize_cidr(cidr) for cidr in valid_cidrs]
+        normalized_cidrs = [normalize_cidr(
+            cidr, min_mask) for cidr in valid_cidrs]
         cidr_objects = [ipaddress.ip_network(
             cidr) for cidr in normalized_cidrs]
         return [str(cidr) for
@@ -97,6 +103,8 @@ def main():
     parser.add_argument('--labels', type=str, required=True,
                         help='YAML string of labels for the '
                         'NetworkSet in key:value format')
+    parser.add_argument('--minmask', type=int, required=False,
+                        default=32, help='Minimum mask for CIDRs')
     parser.add_argument('--output', type=str, help='Output file name')
 
     args = parser.parse_args()
@@ -133,7 +141,7 @@ def main():
             ).startswith('#') and not line.strip().startswith('//')]
             cidr_list.extend(lines)
 
-    normalized_cidrs = merge_and_normalize_cidrs(cidr_list)
+    normalized_cidrs = merge_and_normalize_cidrs(cidr_list, args.minmask)
     calico_manifest = generate_calico_manifest(
         args.name, args.namespace, args.labels, normalized_cidrs)
 
