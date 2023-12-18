@@ -22,7 +22,6 @@ def normalize_cidr(cidr, min_mask):
     else:
         new_cidr = cidr_object
 
-    print(f"Normalized {cidr} to {new_cidr}")
     return f"{new_cidr.network_address}/{new_cidr.netmask}"
 
 
