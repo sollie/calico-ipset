@@ -18,7 +18,8 @@ def normalize_cidr(cidr, min_mask):
 
     if cidr_object.prefixlen > min_mask:
         new_cidr = ipaddress.ip_network(
-            str(cidr_object.network_address) + "/" + str(min_mask), strict=False)
+            str(cidr_object.network_address) + "/" + str(min_mask),
+            strict=False)
     else:
         new_cidr = cidr_object
 
@@ -57,7 +58,7 @@ def generate_calico_manifest(name, namespace, labels, cidrs):
     formatted_labels = "\n    ".join(
         [f"{key}: '{value}'" for key, value in labels_dict.items()])
 
-    manifest = f"""apiVersion: crd.projectcalico.org/v1
+    manifest = f"""apiVersion: projectcalico.org/v3
 kind: NetworkSet
 metadata:
   name: {name}
