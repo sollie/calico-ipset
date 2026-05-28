@@ -25,3 +25,7 @@ inputs:
     required: false
     default: 32
     description: 'Minimum output network mask'
+  apiversion:
+    required: false
+    default: 'projectcalico.org/v3'
+    description: 'Calico API version for the NetworkSet manifest'

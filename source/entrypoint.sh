@@ -39,6 +39,11 @@ if [ -n "$INPUT_MINMASK" ]; then
   minmask_option="--minmask=$INPUT_MINMASK"
 fi
 
+apiversion_option=""
+if [ -n "$INPUT_APIVERSION" ]; then
+  apiversion_option="--apiversion=$INPUT_APIVERSION"
+fi
+
 parsed_labels=$(convert_to_json "$INPUT_LABELS")
 
 python /app/calico-ipset.py \
@@ -46,5 +51,6 @@ python /app/calico-ipset.py \
   --namespace="$INPUT_NAMESPACE" \
   --labels="$parsed_labels" \
   "$minmask_option" \
+  "$apiversion_option" \
   "$output_option" \
   "$INPUT_INPUTS"
