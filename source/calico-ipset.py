@@ -53,12 +53,12 @@ def merge_and_normalize_cidrs(cidr_list, min_mask):
     return []
 
 
-def generate_calico_manifest(name, namespace, labels, cidrs):
+def generate_calico_manifest(name, namespace, labels, cidrs, api_version='projectcalico.org/v3'):
     labels_dict = yaml.safe_load(labels)
     formatted_labels = "\n    ".join(
         [f"{key}: '{value}'" for key, value in labels_dict.items()])
 
-    manifest = f"""apiVersion: projectcalico.org/v3
+    manifest = f"""apiVersion: {api_version}
 kind: NetworkSet
 metadata:
   name: {name}
@@ -105,6 +105,9 @@ def main():
                         'NetworkSet in key:value format')
     parser.add_argument('--minmask', type=int, required=False,
                         default=32, help='Minimum mask for CIDRs')
+    parser.add_argument('--apiversion', type=str, required=False,
+                        default='projectcalico.org/v3',
+                        help='Calico API version for the NetworkSet manifest')
     parser.add_argument('--output', type=str, help='Output file name')
 
     args = parser.parse_args()
@@ -143,7 +146,7 @@ def main():
 
     normalized_cidrs = merge_and_normalize_cidrs(cidr_list, args.minmask)
     calico_manifest = generate_calico_manifest(
-        args.name, args.namespace, args.labels, normalized_cidrs)
+        args.name, args.namespace, args.labels, normalized_cidrs, args.apiversion)
 
     if args.output:
         with open(path_prefix + args.output, 'w') as output_file:
